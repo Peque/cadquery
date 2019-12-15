@@ -240,19 +240,31 @@ class Matrix:
             raise TypeError(
                     "Invalid param to matrix constructor: {}".format(matrix))
 
-    def rotateX(self, angle):
+    def rotateX(self, angle, direction=None):
 
-        self._rotate(gp.OX(),
+        if direction is None:
+            direction = gp.OX()
+        else:
+            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
+        self._rotate(direction,
                      angle)
 
-    def rotateY(self, angle):
+    def rotateY(self, angle, direction=None):
 
-        self._rotate(gp.OY(),
+        if direction is None:
+            direction = gp.OY()
+        else:
+            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
+        self._rotate(direction,
                      angle)
 
-    def rotateZ(self, angle):
+    def rotateZ(self, angle, direction=None):
 
-        self._rotate(gp.OZ(),
+        if direction is None:
+            direction = gp.OZ()
+        else:
+            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
+        self._rotate(direction,
                      angle)
 
     def _rotate(self, direction, angle):
@@ -619,15 +631,15 @@ class Plane(object):
         :param rotate: Vector [xDegrees, yDegrees, zDegrees]
         :return: a copy of this plane rotated as requested.
         """
-        rotate = Vector(self.toWorldCoords(rotate))
+        rotate = Vector(rotate)
         # Convert to radians.
         rotate = rotate.multiply(math.pi / 180.0)
 
         # Compute rotation matrix.
         m = Matrix()
-        m.rotateX(rotate.x)
-        m.rotateY(rotate.y)
-        m.rotateZ(rotate.z)
+        m.rotateX(rotate.x, direction=self.xDir)
+        m.rotateY(rotate.y, direction=self.yDir)
+        m.rotateZ(rotate.z, direction=self.zDir)
 
         # Compute the new plane.
         newXdir = self.xDir.transform(m)

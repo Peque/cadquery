@@ -8,6 +8,9 @@ from random import choice
 from random import random
 from random import randrange
 
+from numpy import cross
+from pytest import approx
+
 # my modules
 from cadquery import *
 from cadquery import exporters
@@ -253,27 +256,64 @@ class TestCadQuery(BaseTest):
         """
         Rotation of a plane in the Z direction should never alter its normal.
 
-        This test creates random planes, with the normal in a random direction
-        among positive and negative X, Y and Z. The plane is defined with this
-        normal and another random perpendicular vector (the X-direction of the
-        plane). The plane is finally rotated a random angle in the Z-direction
-        to verify that the resulting plane maintains the same normal.
+        This test creates random planes. The plane is rotated a random angle in
+        the Z-direction to verify that the resulting plane maintains the same
+        normal.
         """
         for _ in range(100):
-            normal_sign = choice((-1, 1))
-            normal_dir = randrange(3)
             angle = (random() - 0.5) * 720
-
-            normal = [0, 0, 0]
-            normal[normal_dir] = normal_sign
-            xdir = [random(), random(), random()]
-            xdir[normal_dir] = 0
-
-            plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=normal)
+            xdir = Vector(random(), random(), random()).normalized()
+            rdir = Vector(random(), random(), random()).normalized()
+            zdir = list(cross(xdir.toTuple(), rdir.toTuple()))
+            zdir = Vector(*zdir).normalized()
+            plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=zdir)
             rotated = plane.rotated((0, 0, angle)).zDir.toTuple()
-            self.assertAlmostEqual(rotated[0], normal[0])
-            self.assertAlmostEqual(rotated[1], normal[1])
-            self.assertAlmostEqual(rotated[2], normal[2])
+            assert rotated == approx(zdir.toTuple())
+
+    def testPlaneRotateConcat(self):
+        """
+        Test the result of a well-known concatenated rotation example.
+        """
+        xdir = (1, 0, 0)
+        normal = (0, 0, 1)
+        k = 2.0 ** 0.5 / 2.0
+        plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=normal)
+        plane = plane.rotated((0, 0, 45))
+        assert plane.xDir.toTuple() == approx((k, k, 0))
+        assert plane.yDir.toTuple() == approx((-k, k, 0))
+        assert plane.zDir.toTuple() == approx((0, 0, 1))
+        plane = plane.rotated((0, 45, 0))
+        assert plane.xDir.toTuple() == approx((0.5, 0.5, -k))
+        assert plane.yDir.toTuple() == approx((-k, k, 0))
+        assert plane.zDir.toTuple() == approx((0.5, 0.5, k))
+
+    def testPlaneRotateConcatRandom(self):
+        """
+        Rotation of a plane in a given direction should never alter that
+        direction.
+
+        This test creates a plane and rotates it a random angle in a given
+        direction. After the rotation, the direction of the resulting plane
+        in the rotation-direction should be constant.
+        """
+        plane = Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1))
+        for _ in range(100):
+            before = {
+                0: plane.xDir.toTuple(),
+                1: plane.yDir.toTuple(),
+                2: plane.zDir.toTuple(),
+            }
+            angle = (random() - 0.5) * 720
+            direction = randrange(3)
+            rotation = [0, 0, 0]
+            rotation[direction] = angle
+            plane = plane.rotated(rotation)
+            after = {
+                0: plane.xDir.toTuple(),
+                1: plane.yDir.toTuple(),
+                2: plane.zDir.toTuple(),
+            }
+            assert before[direction] == approx(after[direction])
 
     def testLoft(self):
         """
