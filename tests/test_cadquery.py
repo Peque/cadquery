@@ -258,15 +258,20 @@ class TestCadQuery(BaseTest):
         This test creates random planes. The plane is rotated a random angle in
         the Z-direction to verify that the resulting plane maintains the same
         normal.
+
+        The test also checks that the random origin is unaltered after
+        rotation.
         """
         for _ in range(100):
             angle = (random() - 0.5) * 720
             xdir = Vector(random(), random(), random()).normalized()
             rdir = Vector(random(), random(), random()).normalized()
             zdir = xdir.cross(rdir).normalized()
-            plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=zdir)
-            rotated = plane.rotated((0, 0, angle)).zDir.toTuple()
-            assert rotated == approx(zdir.toTuple())
+            origin = (random(), random(), random())
+            plane = Plane(origin=origin, xDir=xdir, normal=zdir)
+            rotated = plane.rotated((0, 0, angle))
+            assert rotated.zDir.toTuple() == approx(zdir.toTuple())
+            assert rotated.origin.toTuple() == approx(origin)
 
     def testPlaneRotateConcat(self):
         """
