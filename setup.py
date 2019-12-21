@@ -31,10 +31,7 @@ setup(
     description='CadQuery is a parametric  scripting language for creating and traversing CAD models',
     long_description=open('README.md').read(),
     packages=['cadquery','cadquery.contrib','cadquery.occ_impl','cadquery.plugins','tests'],
-    install_requires=[
-        'numpy',
-        'pyparsing',
-    ],
+    install_requires=['pyparsing'],
     extras_require={
         'dev': [
             # Documentation

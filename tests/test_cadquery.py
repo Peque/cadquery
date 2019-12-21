@@ -8,7 +8,6 @@ from random import choice
 from random import random
 from random import randrange
 
-from numpy import cross
 from pytest import approx
 
 # my modules
@@ -264,8 +263,7 @@ class TestCadQuery(BaseTest):
             angle = (random() - 0.5) * 720
             xdir = Vector(random(), random(), random()).normalized()
             rdir = Vector(random(), random(), random()).normalized()
-            zdir = list(cross(xdir.toTuple(), rdir.toTuple()))
-            zdir = Vector(*zdir).normalized()
+            zdir = xdir.cross(rdir).normalized()
             plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=zdir)
             rotated = plane.rotated((0, 0, angle)).zDir.toTuple()
             assert rotated == approx(zdir.toTuple())
