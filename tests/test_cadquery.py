@@ -280,7 +280,8 @@ class TestCadQuery(BaseTest):
         xdir = (1, 0, 0)
         normal = (0, 0, 1)
         k = 2.0 ** 0.5 / 2.0
-        plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=normal)
+        origin = (2, -1, 1)
+        plane = Plane(origin=origin, xDir=xdir, normal=normal)
         plane = plane.rotated((0, 0, 45))
         assert plane.xDir.toTuple() == approx((k, k, 0))
         assert plane.yDir.toTuple() == approx((-k, k, 0))
@@ -289,6 +290,7 @@ class TestCadQuery(BaseTest):
         assert plane.xDir.toTuple() == approx((0.5, 0.5, -k))
         assert plane.yDir.toTuple() == approx((-k, k, 0))
         assert plane.zDir.toTuple() == approx((0.5, 0.5, k))
+        assert plane.origin.toTuple() == origin
 
     def testPlaneRotateConcatRandom(self):
         """
@@ -298,8 +300,11 @@ class TestCadQuery(BaseTest):
         This test creates a plane and rotates it a random angle in a given
         direction. After the rotation, the direction of the resulting plane
         in the rotation-direction should be constant.
+
+        The test also checks that the origin is unaltered after all rotations.
         """
-        plane = Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1))
+        origin = (2, -1, 1)
+        plane = Plane(origin=origin, xDir=(1, 0, 0), normal=(0, 0, 1))
         for _ in range(100):
             before = {
                 0: plane.xDir.toTuple(),
@@ -317,6 +322,7 @@ class TestCadQuery(BaseTest):
                 2: plane.zDir.toTuple(),
             }
             assert before[direction] == approx(after[direction])
+        assert plane.origin.toTuple() == origin
 
     def testLoft(self):
         """
