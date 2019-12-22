@@ -240,31 +240,19 @@ class Matrix:
             raise TypeError(
                     "Invalid param to matrix constructor: {}".format(matrix))
 
-    def rotateX(self, angle, direction=None):
+    def rotateX(self, angle):
 
-        if direction is None:
-            direction = gp.OX()
-        else:
-            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
-        self._rotate(direction,
+        self._rotate(gp.OX(),
                      angle)
 
-    def rotateY(self, angle, direction=None):
+    def rotateY(self, angle):
 
-        if direction is None:
-            direction = gp.OY()
-        else:
-            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
-        self._rotate(direction,
+        self._rotate(gp.OY(),
                      angle)
 
-    def rotateZ(self, angle, direction=None):
+    def rotateZ(self, angle):
 
-        if direction is None:
-            direction = gp.OZ()
-        else:
-            direction = gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*direction.toTuple()))
-        self._rotate(direction,
+        self._rotate(gp.OZ(),
                      angle)
 
     def _rotate(self, direction, angle):
@@ -636,14 +624,23 @@ class Plane(object):
         rotate = rotate.multiply(math.pi / 180.0)
 
         # Compute rotation matrix.
-        m = Matrix()
-        m.rotateX(rotate.x, direction=self.xDir)
-        m.rotateY(rotate.y, direction=self.yDir)
-        m.rotateZ(rotate.z, direction=self.zDir)
+        T1 = gp_Trsf()
+        T1.SetRotation(gp_Ax1(gp_Pnt(*(0, 0, 0)),
+                              gp_Dir(*self.xDir.toTuple())),
+                       rotate.x)
+        T2 = gp_Trsf()
+        T2.SetRotation(gp_Ax1(gp_Pnt(*(0, 0, 0)),
+                              gp_Dir(*self.yDir.toTuple())),
+                       rotate.y)
+        T3 = gp_Trsf()
+        T3.SetRotation(gp_Ax1(gp_Pnt(*(0, 0, 0)),
+                              gp_Dir(*self.zDir.toTuple())),
+                       rotate.z)
+        T = Matrix(gp_GTrsf(T1 * T2 * T3))
 
         # Compute the new plane.
-        newXdir = self.xDir.transform(m)
-        newZdir = self.zDir.transform(m)
+        newXdir = self.xDir.transform(T)
+        newZdir = self.zDir.transform(T)
 
         return Plane(self.origin, newXdir, newZdir)
 
